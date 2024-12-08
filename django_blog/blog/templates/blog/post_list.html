@@ -1,0 +1,11 @@
+{% extends 'blog/base.html' %} {% block content %}
+<h2>All Posts</h2>
+<ul>
+    {% for post in posts %}
+    <li>
+        <a href="{% url 'post-detail' post.pk %}">{{ post.title }}</a>
+        <p>{{ post.content|slice:":50" }}...</p>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
