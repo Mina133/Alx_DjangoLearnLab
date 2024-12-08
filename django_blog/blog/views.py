@@ -7,14 +7,14 @@ from django.contrib.auth.decorators import login_required
 from .forms import UserUpdateForm, ProfileUpdateForm
 from .models import Profile
 class CustomLoginView(LoginView):
-    template_name = 'registration/login.html'
+    template_name ='blog/login.html'
 
 class LogoutView():
     def logout_view(request):
         if request.method == 'POST':
             logout(request)
             return redirect('login')
-        return render(request, 'registration/logout.html')
+        return render(request, 'blog/logout.html')
 
 def register_view(request):
     if request.method == 'POST':
@@ -25,7 +25,7 @@ def register_view(request):
             return redirect('login')
     else:
         form = UserCreationForm()
-    return render(request, 'registration/register.html', {'form': form})
+    return render(request, 'blog/register.html', {'form': form})
 
 
 @login_required
