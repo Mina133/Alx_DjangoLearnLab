@@ -1,14 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from .forms import UserUpdateForm, ProfileUpdateForm
-from .models import Profile, Post
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from .forms import UserUpdateForm, ProfileUpdateForm, CommentForm
+from .models import Profile, Post, Comment
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+
 class CustomLoginView(LoginView):
     template_name ='blog/login.html'
 
@@ -65,9 +66,24 @@ class PostListView(ListView):
     ordering = ['-published_date']
 
 
-class PostDetailView(DetailView):
-    model = Post
-    template_name = 'blog/post_details.html'
+class PostDetailView(View):
+    def get(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        comments = post.comments.all()
+        form = CommentForm()
+        return render(request, 'blog/post_details.html', {'post': post, 'comments': comments, 'form': form})
+
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.author = request.user
+            comment.save()
+            return redirect('post-detail', pk=post.pk)
+        comments = post.comments.all()
+        return render(request, 'blog/post_details.html', {'post': post, 'comments': comments, 'form': form})
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
@@ -100,3 +116,33 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
     def test_func(self):
         post = self.get_object()
         return self.request.user == post.author
+    
+
+class CommentView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment_form.html'
+    success_url = reverse_lazy('post-list')
+
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.author
+    
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment_form.html'
+
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.author
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    template_name = 'blog/comment_confirm_delete.html'
+    def get_success_url(self):
+        return redirect('post-details', pk=self.object.post.pk)
+    def test_func(self):
+        comment = self.get_object()
+        return self.request.user == comment.author
