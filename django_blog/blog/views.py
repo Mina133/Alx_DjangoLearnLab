@@ -166,7 +166,7 @@ class PostSearchView(ListView):
             ).distinct()
         return Post.objects.none()
     
-class PostByTagView(ListView):
+class PostByTagListView(ListView):
     model = Post
     template_name = 'blog/post_by_tag.html'
     context_object_name = 'posts'
