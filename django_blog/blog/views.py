@@ -9,7 +9,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .forms import UserUpdateForm, ProfileUpdateForm, CommentForm
 from .models import Profile, Post, Comment
-
+from django.db.models import Q
 
 # Authentication Views
 class CustomLoginView(LoginView):
@@ -151,3 +151,26 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self):
         return self.request.user == self.get_object().author
+
+
+class PostSearchView(ListView):
+    model = Post
+    template_name = 'blog/post_list.html'
+    context_object_name = 'posts'
+
+    def get_queryset(self):
+        query = self.request.GET.get('q')
+        if query:
+            return Post.objects.filter(
+                Q(title__icontains=query) | Q(content__icontains=query) | Q(tags__name__icontains=query)
+            ).distinct()
+        return Post.objects.none()
+    
+class PostByTagView(ListView):
+    model = Post
+    template_name = 'blog/post_by_tag.html'
+    context_object_name = 'posts'
+
+    def get_queryset(self):
+        tag_name = self.kwargs['tag']
+        return Post.objects.filter(tags__name__icontains=tag_name)
