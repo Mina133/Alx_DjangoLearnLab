@@ -8,7 +8,7 @@ from .models import CustomUser
 from .serializers import UserSerializer, RegisterSerializer, LoginSerializer
 from django.contrib.auth import get_user_model
 
-User = get_user_model().objects.create_user(username='test', password='test')
+User = get_user_model().objects.create_user
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
