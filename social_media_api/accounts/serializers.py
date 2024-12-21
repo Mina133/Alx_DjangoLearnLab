@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import CustomUser
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model, authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -24,24 +25,15 @@ class RegisterSerializer(serializers.ModelSerializer):
     
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
-    password = serializers.CharField()
+    password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        username = data.get('username')
-        password = data.get('password')
-
-        if username is None or password is None:
-            raise serializers.ValidationError('Please provide both username and password')
-
-        user = authenticate(username=username, password=password)
-
-        if not user:
-            raise serializers.ValidationError('Invalid Credentials')
-
-        data['user'] = user
-        data['token'], _ = Token.objects.get_or_create(user=user)[0]
-        return data
-
+        """Validate user credentials and retrieve token"""
+        user = get_user_model().objects.get(username=data['username'])
+        if user.check_password(data['password']):
+            refresh = RefreshToken.for_user(user)
+            return {'access_token': str(refresh.access_token)}
+        raise serializers.ValidationError("Invalid credentials")
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
