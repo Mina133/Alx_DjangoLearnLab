@@ -5,6 +5,7 @@ from .models import Post, Comment
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import generics
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
@@ -34,12 +35,12 @@ class CommentViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticatedOrReadOnly()]
     
 
-class FeedView(APIView):
+class FeedView(generics.GenericAPIView):
+    serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
-        user = request.user
-        following = user.following.all()
-        posts = Post.objects.filter(author__in=following).order_by('-created_at')
+        followed_user = request.user.following.all()
+        posts = Post.objects.filter(author__in=followed_user).order_by('-created_at')
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
