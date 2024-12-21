@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework import permissions
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from django.contrib.auth import authenticate
@@ -13,7 +13,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model().objects.create_user
 class RegisterView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -25,7 +25,7 @@ class RegisterView(APIView):
             })
         return Response(serializer.errors, status=400)
 class LoginView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
     
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -40,7 +40,7 @@ class LoginView(APIView):
 class FollowUserView(generics.GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = FollowSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         """Allows the authenticated user to follow another user."""
@@ -54,7 +54,7 @@ class FollowUserView(generics.GenericAPIView):
 class UnfollowUserView(generics.GenericAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = FollowSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         """Allows the authenticated user to unfollow another user."""
