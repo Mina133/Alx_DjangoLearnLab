@@ -4,7 +4,7 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 
-User = get_user_model()
+User = get_user_model().objects.create_user
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -34,6 +34,8 @@ class LoginSerializer(serializers.Serializer):
             refresh = RefreshToken.for_user(user)
             return {'access_token': str(refresh.access_token)}
         raise serializers.ValidationError("Invalid credentials")
+    
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
