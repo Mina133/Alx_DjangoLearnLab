@@ -51,15 +51,13 @@ class LikePostView(generics.GenericAPIView):
 
     def post(self, request, pk):
         """Like a post."""
-        try:
-            post = Post.objects.get(pk=pk)
-        except Post.DoesNotExist:
-            return Response({'detail': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
+        post = generics.get_object_or_404(Post, pk=pk)
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
         
-        if Like.objects.filter(user=request.user, post=post).exists():
+        if not created:
             return Response({'detail': 'You have already liked this post'}, status=status.HTTP_400_BAD_REQUEST)
         
-        Like.objects.create(user=request.user, post=post)
+        # Generate a notification
         Notification.objects.create(
             recipient=post.author,
             actor=request.user,
@@ -67,7 +65,6 @@ class LikePostView(generics.GenericAPIView):
             target=post
         )
         return Response({'detail': 'Post liked'}, status=status.HTTP_200_OK)
-
 class UnlikePostView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -85,7 +82,17 @@ class UnlikePostView(generics.GenericAPIView):
         like.delete()
         return Response({'detail': 'Post unliked'}, status=status.HTTP_200_OK)
 
-
+def post(self, request, pk):
+        """Unlike a post."""
+        post = generics.get_object_or_404(Post, pk=pk)
+        
+        try:
+            like = Like.objects.get(user=request.user, post=post)
+            like.delete()
+        except Like.DoesNotExist:
+            return Response({'detail': 'You have not liked this post'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({'detail': 'Post unliked'}, status=status.HTTP_200_OK)
 class NotificationListView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
